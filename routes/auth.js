@@ -26,9 +26,11 @@ router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user) return res.status(400).json({ error: 'Usuario no encontrado' });
+  
+  const match = await bcrypt.compare(password, user.password).catch(err => {
+  return res.status(500).json({ error: 'Error al comparar la contraseña' });
+});
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(401).json({ error: 'Contraseña incorrecta' });
 
   const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
   res.json({ token });
